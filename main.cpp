@@ -30,9 +30,9 @@ vector<void*> reprodution_queue;
 void* window_manag(void* arg){
     printf("--- Welcome to TUI Music Player ---\n\n");
     printf("Usage:\n");
-    printf("    Enter command: a -- to add a music to reprotudion queue\n \
-                  r -- to remove a music from reprodution queue\n \
-                  d -- to exit\n");
+    printf("    Enter command: add -- to add a music to reprotudion queue\n \
+                  rmv -- to remove a music from reprodution queue\n \
+                  ext -- to exit\n\n");
     
     pthread_exit(NULL);
 }
@@ -41,27 +41,63 @@ void* add_queue(void* music_name){
     while(pthread_mutex_trylock(&_mutex));
 
     reprodution_queue.push_back(music_name);
-    printf("The music was sucessfully added to the list!");
+    cout << "The music was sucessfully added to the list!\n" << endl;
 
     pthread_mutex_unlock(&_mutex);
+    pthread_exit(NULL);
+}
 
+void* rmv_queue(void* music_name){
+
+    for (int i = 0; i < reprodution_queue.size(); i++){
+        string item = *reinterpret_cast<string*>(reprodution_queue[i]);
+        string music = *reinterpret_cast<string*>(music_name);
+
+        cout << item << endl; // BUG BUG BUG BUG --> rmv opa  
+        cout << music << endl;
+
+        if(item == music){ 
+
+            while(pthread_mutex_trylock(&_mutex));
+
+            reprodution_queue.erase(reprodution_queue.begin()+i);
+            cout << "The music was sucessfully deleted!\n" << endl;;
+
+            pthread_mutex_unlock(&_mutex);
+            pthread_exit(NULL);
+        }
+    }
+    cout << "ERROR: Music not found!\n" << endl;
     pthread_exit(NULL);
 }
 
 void* keyboard_manag(void* arg){
     string cmd;
+
     while(true){
         cin >> cmd;
-        if (cmd == "a"){
-            char* music; 
-            cin >> music; // ----> CRASH
-            printf("%d", *music); // NAO CHEGA AQUI
-            pthread_create(&add, NULL, &add_queue, (void*) music);
+
+        if (cmd == "add"){
+            string music; 
+            getline(cin, music); 
+
+            pthread_create(&add, NULL, &add_queue, &music);
+            pthread_join(add, NULL);
         }
-    
-        else if(cmd == "d"){
+
+        else if (cmd == "rmv"){
+            string music; 
+            getline(cin, music);
+            
+            pthread_create(&add, NULL, &rmv_queue, &music);
+            pthread_join(rmv, NULL);            
+        }
+
+        else if(cmd == "ext")
             pthread_exit(NULL);
-            break;
+
+        else{
+            cout << "ERROR: Command not found!\n" << endl; 
         }
     }
 }
