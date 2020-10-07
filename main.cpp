@@ -4,59 +4,42 @@
 
 using namespace std;
 
-pthread_t keyboard, window, add, rmv;
+pthread_t keyboard, window, add, rmv, shw;
 pthread_mutex_t _mutex = PTHREAD_MUTEX_INITIALIZER;
-vector<void*> reprodution_queue;
 
-// void *window_manag(void* arg){
-//     initscr();
-//     noecho();
-
-//     printw("--- Welcome to TUI Music Player ---\n\n");
-//     printw("Usage:\n");
-//     printw("    Press command: a -- to add a music to reprotudion queue\n \
-//                   r -- to remove a music from reprodution queue\n \
-//                   d -- to exit\n");
-
-//     while(true){
-//         char key = getch();
-//         if(key == 'd'){
-//             endwin();
-//             pthread_exit(NULL);
-//         }       
-//     }
-// }
+vector<string> reprodution_queue;
+string song_to_add;
+string song_to_rmv;
 
 void* window_manag(void* arg){
     printf("--- Welcome to TUI Music Player ---\n\n");
     printf("Usage:\n");
     printf("    Enter command: add -- to add a music to reprotudion queue\n \
                   rmv -- to remove a music from reprodution queue\n \
-                  ext -- to exit\n\n");
+                  ext -- to exit\n \
+                  shw -- to show the reprodution queue\n\n");
     
     pthread_exit(NULL);
 }
 
-void* add_queue(void* music_name){
+void* add_queue(void* arg){
     while(pthread_mutex_trylock(&_mutex));
 
-    reprodution_queue.push_back(music_name);
-    cout << "The music was sucessfully added to the list!\n" << endl;
+    if(song_to_add.length() == 1 || song_to_add.empty())
+        cout << "ERROR: You must type a song!\n" << endl;
+    
+    else{
+        reprodution_queue.push_back(song_to_add);
+        cout << "The music was sucessfully added to the list!\n" << endl;
+    }
 
     pthread_mutex_unlock(&_mutex);
     pthread_exit(NULL);
 }
 
-void* rmv_queue(void* music_name){
-
+void* rmv_queue(void* arg){
     for (int i = 0; i < reprodution_queue.size(); i++){
-        string item = *reinterpret_cast<string*>(reprodution_queue[i]);
-        string music = *reinterpret_cast<string*>(music_name);
-
-        cout << item << endl; // BUG BUG BUG BUG --> rmv opa  
-        cout << music << endl;
-
-        if(item == music){ 
+        if(reprodution_queue[i] == song_to_rmv){ 
 
             while(pthread_mutex_trylock(&_mutex));
 
@@ -71,6 +54,18 @@ void* rmv_queue(void* music_name){
     pthread_exit(NULL);
 }
 
+void* shw_queue(void* arg){
+    while(pthread_mutex_trylock(&_mutex));
+
+    cout << "\n--- Playlist ---" << endl;
+    for(auto elem : reprodution_queue)
+        cout << "   " << elem << endl;
+    cout << endl;
+
+    pthread_mutex_unlock(&_mutex);
+    pthread_exit(NULL);
+}
+
 void* keyboard_manag(void* arg){
     string cmd;
 
@@ -78,19 +73,28 @@ void* keyboard_manag(void* arg){
         cin >> cmd;
 
         if (cmd == "add"){
-            string music; 
-            getline(cin, music); 
+            string music_name; 
+            getline(cin, music_name); 
 
-            pthread_create(&add, NULL, &add_queue, &music);
+            song_to_add = music_name; 
+
+            pthread_create(&add, NULL, &add_queue, NULL);
             pthread_join(add, NULL);
         }
 
         else if (cmd == "rmv"){
-            string music; 
-            getline(cin, music);
+            string music_name; 
+            getline(cin, music_name);
             
-            pthread_create(&add, NULL, &rmv_queue, &music);
+            song_to_rmv = music_name;
+
+            pthread_create(&add, NULL, &rmv_queue, NULL);
             pthread_join(rmv, NULL);            
+        }
+
+        else if (cmd == "shw"){
+            pthread_create(&shw, NULL, &shw_queue, NULL);
+            pthread_join(shw, NULL);
         }
 
         else if(cmd == "ext")
@@ -103,7 +107,6 @@ void* keyboard_manag(void* arg){
 }
 
 int main(){
-
     pthread_create(&window, NULL, window_manag, NULL);
     pthread_create(&keyboard, NULL, keyboard_manag, NULL);
 
