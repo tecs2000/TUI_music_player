@@ -3,7 +3,7 @@
 
 using namespace std;
 
-pthread_t keyboard, window, add, rmv, shw;
+pthread_t keyboard, window, add, rmv, shw, hlp;
 pthread_mutex_t _mutex = PTHREAD_MUTEX_INITIALIZER;
 
 vector<string> reproduction_list;
@@ -15,8 +15,9 @@ void* window_manag(void* arg){
     printf("Usage:\n");
     printf("    Enter command: add -- to add a music to reproduction list\n \
                   rmv -- to remove a music from reproduction list\n \
-                  ext -- to exit\n \
-                  shw -- to show the reproduction list\n\n");
+                  shw -- to show the reproduction list\n \
+                  hlp -- to show the usage instructions\n \
+                  ext -- to exit\n\n");
     
     pthread_exit(NULL);
 }
@@ -65,8 +66,19 @@ void* shw_queue(void* arg){
             cout << "   " << elem << endl;
         cout << endl;
     }    
-    
+
     pthread_mutex_unlock(&_mutex);
+    pthread_exit(NULL);
+}
+
+void* send_help(void* arg){
+    printf("Usage:\n");
+    printf("    Enter command: add -- to add a music to reproduction list\n \
+                  rmv -- to remove a music from reproduction list\n \
+                  shw -- to show the reproduction list\n \
+                  hlp -- to show the usage instructions\n \
+                  ext -- to exit\n\n");
+    
     pthread_exit(NULL);
 }
 
@@ -92,7 +104,7 @@ void* keyboard_manag(void* arg){
             
             song_to_rmv = music_name;
 
-            pthread_create(&add, NULL, &rmv_music, NULL);
+            pthread_create(&rmv, NULL, &rmv_music, NULL);
             pthread_join(rmv, NULL);            
         }
 
@@ -101,6 +113,10 @@ void* keyboard_manag(void* arg){
             pthread_join(shw, NULL);
         }
 
+        else if (cmd == "hlp"){
+            pthread_create(&hlp, NULL, &send_help, NULL);
+            pthread_join(hlp, NULL);
+        }
         else if(cmd == "ext")
             pthread_exit(NULL);
 
