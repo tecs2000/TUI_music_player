@@ -6,7 +6,7 @@ using namespace std;
 pthread_t keyboard, window, add, rmv, shw;
 pthread_mutex_t _mutex = PTHREAD_MUTEX_INITIALIZER;
 
-vector<string> reprodution_music;
+vector<string> reproduction_list;
 string song_to_add;
 string song_to_rmv;
 
@@ -28,7 +28,7 @@ void* add_music(void* arg){
         cout << "ERROR: You must type a song!\n" << endl;
     
     else{
-        reprodution_music.push_back(song_to_add);
+        reproduction_list.push_back(song_to_add);
         cout << "The music was sucessfully added to the list!\n" << endl;
     }
 
@@ -37,12 +37,12 @@ void* add_music(void* arg){
 }
 
 void* rmv_music(void* arg){
-    for (int i = 0; i < reprodution_music.size(); i++){
-        if(reprodution_music[i] == song_to_rmv){ 
+    for (int i = 0; i < reproduction_list.size(); i++){
+        if(reproduction_list[i] == song_to_rmv){ 
 
             while(pthread_mutex_trylock(&_mutex));
 
-            reprodution_music.erase(reprodution_music.begin()+i);
+            reproduction_list.erase(reproduction_list.begin()+i);
             cout << "The music was sucessfully deleted!\n" << endl;;
 
             pthread_mutex_unlock(&_mutex);
@@ -56,11 +56,16 @@ void* rmv_music(void* arg){
 void* shw_queue(void* arg){
     while(pthread_mutex_trylock(&_mutex));
 
-    cout << "\n--- Playlist ---" << endl;
-    for(auto elem : reprodution_music)
-        cout << "   " << elem << endl;
-    cout << endl;
-
+    if (reproduction_list.empty())
+        cout << "Sorry, the list is empty!\n" << endl;
+    
+    else{
+        cout << "\n--- Playlist ---" << endl;
+        for(auto elem : reproduction_list)
+            cout << "   " << elem << endl;
+        cout << endl;
+    }    
+    
     pthread_mutex_unlock(&_mutex);
     pthread_exit(NULL);
 }
