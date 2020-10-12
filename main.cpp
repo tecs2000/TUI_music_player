@@ -1,5 +1,4 @@
 #include <bits/stdc++.h>
-// #include <ncurses.h>
 #include <pthread.h>
 
 using namespace std;
@@ -7,29 +6,29 @@ using namespace std;
 pthread_t keyboard, window, add, rmv, shw;
 pthread_mutex_t _mutex = PTHREAD_MUTEX_INITIALIZER;
 
-vector<string> reprodution_queue;
+vector<string> reprodution_music;
 string song_to_add;
 string song_to_rmv;
 
 void* window_manag(void* arg){
     printf("--- Welcome to TUI Music Player ---\n\n");
     printf("Usage:\n");
-    printf("    Enter command: add -- to add a music to reprotudion queue\n \
-                  rmv -- to remove a music from reprodution queue\n \
+    printf("    Enter command: add -- to add a music to reproduction list\n \
+                  rmv -- to remove a music from reproduction list\n \
                   ext -- to exit\n \
-                  shw -- to show the reprodution queue\n\n");
+                  shw -- to show the reproduction list\n\n");
     
     pthread_exit(NULL);
 }
 
-void* add_queue(void* arg){
+void* add_music(void* arg){
     while(pthread_mutex_trylock(&_mutex));
 
     if(song_to_add.length() == 1 || song_to_add.empty())
         cout << "ERROR: You must type a song!\n" << endl;
     
     else{
-        reprodution_queue.push_back(song_to_add);
+        reprodution_music.push_back(song_to_add);
         cout << "The music was sucessfully added to the list!\n" << endl;
     }
 
@@ -37,13 +36,13 @@ void* add_queue(void* arg){
     pthread_exit(NULL);
 }
 
-void* rmv_queue(void* arg){
-    for (int i = 0; i < reprodution_queue.size(); i++){
-        if(reprodution_queue[i] == song_to_rmv){ 
+void* rmv_music(void* arg){
+    for (int i = 0; i < reprodution_music.size(); i++){
+        if(reprodution_music[i] == song_to_rmv){ 
 
             while(pthread_mutex_trylock(&_mutex));
 
-            reprodution_queue.erase(reprodution_queue.begin()+i);
+            reprodution_music.erase(reprodution_music.begin()+i);
             cout << "The music was sucessfully deleted!\n" << endl;;
 
             pthread_mutex_unlock(&_mutex);
@@ -58,7 +57,7 @@ void* shw_queue(void* arg){
     while(pthread_mutex_trylock(&_mutex));
 
     cout << "\n--- Playlist ---" << endl;
-    for(auto elem : reprodution_queue)
+    for(auto elem : reprodution_music)
         cout << "   " << elem << endl;
     cout << endl;
 
@@ -78,7 +77,7 @@ void* keyboard_manag(void* arg){
 
             song_to_add = music_name; 
 
-            pthread_create(&add, NULL, &add_queue, NULL);
+            pthread_create(&add, NULL, &add_music, NULL);
             pthread_join(add, NULL);
         }
 
@@ -88,7 +87,7 @@ void* keyboard_manag(void* arg){
             
             song_to_rmv = music_name;
 
-            pthread_create(&add, NULL, &rmv_queue, NULL);
+            pthread_create(&add, NULL, &rmv_music, NULL);
             pthread_join(rmv, NULL);            
         }
 
